@@ -10,7 +10,7 @@ c.fillRect(0, 0, canvas.width, canvas.height);
 
 // classes
 class Sprite {
-    constructor({ position, size, color = 'red' }) {
+    constructor({ position, size, color = "red" }) {
         this.position = position;
         this.size = size;
         this.velocity = {
@@ -35,8 +35,6 @@ class Sprite {
         this.position.y += this.velocity.y;
         this.draw();
     }
-
-
 }
 
 class Bomb extends Sprite {
@@ -47,7 +45,7 @@ class Bomb extends Sprite {
                 width: 10,
                 height: 10,
             },
-            color: `green`
+            color: `green`,
         });
     }
 }
@@ -58,11 +56,9 @@ class Player extends Sprite {
     }
 
     dropBomb() {
-        return new Bomb({...this.position})
+        return new Bomb({ ...this.position });
     }
 }
-
-
 
 // init
 const player = new Player({
@@ -78,25 +74,47 @@ const player = new Player({
 
 const bombs = [];
 
-// key event
+// KEY EVENTS
+// inits
+const keys = {
+    up: {
+        pressed: false,
+    },
+    down: {
+        pressed: false,
+    },
+    left: {
+        pressed: false,
+    },
+    right: {
+        pressed: false,
+    },
+    space: {
+        pressed: false,
+    },
+};
+let lastKey = "";
 // при нажатии на кнопку
 window.addEventListener("keydown", (event) => {
     switch (event.key) {
         case "ArrowUp":
-            player.velocity.y = -1;
+            keys.up.pressed = true;
+            lastKey = 'up';
             break;
         case "ArrowDown":
-            player.velocity.y = 1;
+            keys.down.pressed = true;
+            lastKey = 'down';
             break;
         case "ArrowLeft":
-            player.velocity.x = 1;
+            keys.left.pressed = true;
+            lastKey = 'left';
             break;
         case "ArrowRight":
-            player.velocity.x = -1;
+            keys.right.pressed = true;
+            lastKey = 'right';
             break;
         case " ":
-            bombs.push(player.dropBomb());
-            console.log(bombs);
+            keys.space.pressed = true;
             break;
     }
 });
@@ -104,19 +122,23 @@ window.addEventListener("keydown", (event) => {
 window.addEventListener("keyup", (event) => {
     switch (event.key) {
         case "ArrowUp":
-            player.velocity.y = 0;
+            keys.up.pressed = false;
             break;
         case "ArrowDown":
-            player.velocity.y = 0;
+            keys.down.pressed = false;
             break;
         case "ArrowLeft":
-            player.velocity.x = 0;
+            keys.left.pressed = false;
             break;
         case "ArrowRight":
-            player.velocity.x = 0;
+            keys.right.pressed = false;
+            break;
+        case " ":
+            keys.space.pressed = false;
             break;
     }
 });
+
 
 // animation loop
 function animate() {
@@ -125,6 +147,26 @@ function animate() {
     // очистка канваса
     c.fillStyle = "black";
     c.fillRect(0, 0, canvas.width, canvas.height);
+
+
+    // отработка нажатий
+    player.velocity.x = 0;
+    player.velocity.y = 0;
+    if (keys.up.pressed && lastKey !== "down") {
+        player.velocity.y = -1;
+    } else if (keys.down.pressed && lastKey !== "up") {
+        player.velocity.y = 1;
+    } else if (keys.left.pressed && lastKey !== "right") {
+        player.velocity.x = 1;
+    } else if (keys.right.pressed && lastKey !== "left") {
+        player.velocity.x = -1;
+    }
+    if (keys.space.pressed) {
+        bombs.push(player.dropBomb());
+        keys.space.pressed = false;
+    }
+
+
     // отрисовка графических элементов
     // игрок
     player.update();
