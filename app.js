@@ -8,6 +8,32 @@ canvas.height = 600;
 c.fillStyle = "black";
 c.fillRect(0, 0, canvas.width, canvas.height);
 
+// grid utils
+const grid = {
+    size: {
+        width: 20,
+        height: 20,
+    },
+    unit: 30
+}
+
+function snapPosition(position) {
+    const x = Math.floor(position.x / grid.unit) * grid.unit;
+    const y = Math.floor(position.y / grid.unit) * grid.unit;
+    return {
+        x,
+        y
+    }
+}
+
+function getPosition(coord) {
+    return {
+        x: coord.x * grid.unit,
+        y: coord.y * grid.unit,
+    }
+}
+
+
 // classes
 class Sprite {
     constructor({ position, size, color = "red" }) {
@@ -56,7 +82,7 @@ class Player extends Sprite {
     }
 
     dropBomb() {
-        return new Bomb({ ...this.position });
+        return new Bomb({ ...snapPosition(this.position) });
     }
 }
 
@@ -71,6 +97,8 @@ const player = new Player({
         height: 30,
     },
 });
+
+
 
 const bombs = [];
 
