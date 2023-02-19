@@ -8,32 +8,6 @@ canvas.height = 600;
 c.fillStyle = "black";
 c.fillRect(0, 0, canvas.width, canvas.height);
 
-// grid utils
-const grid = {
-    size: {
-        width: 20,
-        height: 20,
-    },
-    unit: 30
-}
-
-function snapPosition(position) {
-    const x = Math.floor(position.x / grid.unit) * grid.unit;
-    const y = Math.floor(position.y / grid.unit) * grid.unit;
-    return {
-        x,
-        y
-    }
-}
-
-function getPosition(coord) {
-    return {
-        x: coord.x * grid.unit,
-        y: coord.y * grid.unit,
-    }
-}
-
-
 // classes
 class Sprite {
     constructor({ position, size, color = "red" }) {
@@ -57,151 +31,66 @@ class Sprite {
     }
 
     update() {
-        this.position.x -= this.velocity.x;
+        this.position.x += this.velocity.x;
         this.position.y += this.velocity.y;
         this.draw();
     }
 }
 
-class Bomb extends Sprite {
-    constructor(position) {
-        super({
-            position,
-            size: {
-                width: 10,
-                height: 10,
-            },
-            color: `green`,
-        });
+const gridShow = [];
+for (let y = 0; y < GRID_PROP.size.height; y++) {
+    for (let x = 0; x < GRID_PROP.size.width; x++) {
+
+        let color = 'black';
+        switch (grid[x][y]) {
+            case 0:
+                color = 'grey';
+                break;
+            case 1:
+                color = 'red';
+                break;
+            case 2:
+                color = 'green';
+                break;
+            case 3:
+                color = 'blue';
+                break;
+            default:
+                break;
+        }
+
+        gridShow.push(
+            new Sprite({
+                position: {
+                    x: x * GRID_PROP.unit + GRID_PROP.unit / 3,
+                    y: y * GRID_PROP.unit + GRID_PROP.unit / 3,
+                },
+                size: {
+                    width: 10,
+                    height: 10,
+                },
+                color,
+            })
+        );
     }
 }
 
-class Player extends Sprite {
-    constructor({ position, size }) {
-        super({ position, size });
-    }
 
-    dropBomb() {
-        return new Bomb({ ...snapPosition(this.position) });
-    }
-}
-
-// init
-const player = new Player({
-    position: {
-        x: 100,
-        y: 100,
-    },
-    size: {
-        width: 30,
-        height: 30,
-    },
-});
-
-
-
-const bombs = [];
-
-// KEY EVENTS
-// inits
-const keys = {
-    up: {
-        pressed: false,
-    },
-    down: {
-        pressed: false,
-    },
-    left: {
-        pressed: false,
-    },
-    right: {
-        pressed: false,
-    },
-    space: {
-        pressed: false,
-    },
-};
-let lastKey = "";
-// при нажатии на кнопку
-window.addEventListener("keydown", (event) => {
-    switch (event.key) {
-        case "ArrowUp":
-            keys.up.pressed = true;
-            lastKey = 'up';
-            break;
-        case "ArrowDown":
-            keys.down.pressed = true;
-            lastKey = 'down';
-            break;
-        case "ArrowLeft":
-            keys.left.pressed = true;
-            lastKey = 'left';
-            break;
-        case "ArrowRight":
-            keys.right.pressed = true;
-            lastKey = 'right';
-            break;
-        case " ":
-            keys.space.pressed = true;
-            break;
-    }
-});
-// при отпускании кнопки
-window.addEventListener("keyup", (event) => {
-    switch (event.key) {
-        case "ArrowUp":
-            keys.up.pressed = false;
-            break;
-        case "ArrowDown":
-            keys.down.pressed = false;
-            break;
-        case "ArrowLeft":
-            keys.left.pressed = false;
-            break;
-        case "ArrowRight":
-            keys.right.pressed = false;
-            break;
-        case " ":
-            keys.space.pressed = false;
-            break;
-    }
-});
-
+console.log(gridShow);
 
 // animation loop
 function animate() {
     // зацикливание функции анимации
     window.requestAnimationFrame(animate);
+
     // очистка канваса
     c.fillStyle = "black";
     c.fillRect(0, 0, canvas.width, canvas.height);
 
-
-    // отработка нажатий
-    player.velocity.x = 0;
-    player.velocity.y = 0;
-    if (keys.up.pressed && lastKey !== "down") {
-        player.velocity.y = -1;
-    } else if (keys.down.pressed && lastKey !== "up") {
-        player.velocity.y = 1;
-    } else if (keys.left.pressed && lastKey !== "right") {
-        player.velocity.x = 1;
-    } else if (keys.right.pressed && lastKey !== "left") {
-        player.velocity.x = -1;
-    }
-    if (keys.space.pressed) {
-        bombs.push(player.dropBomb());
-        keys.space.pressed = false;
-    }
-
-
-    // отрисовка графических элементов
-    // игрок
-    player.update();
-    // бомбы
-    bombs.forEach((x) => {
+    // отрисовка
+    // сетка
+    gridShow.forEach((x) => {
         x.update();
-        return;
-    });
+    })
 }
 animate();
