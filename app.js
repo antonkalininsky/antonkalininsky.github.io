@@ -54,28 +54,35 @@ function animate() {
                 height: 5,
             };
             switch (game.grid.values[x][y]) {
-                case 0:
+                case 0: // empty
                     color = "grey";
                     break;
-                case 1:
+                case 1: // player
                     color = "red";
                     size = {
                         width: 30,
                         height: 30,
                     };
                     break;
-                case 2:
+                case 2: // bomb
                     color = "green";
                     size = {
                         width: 20,
                         height: 20,
                     };
                     break;
-                case 3:
+                case 3: // wall
                     color = "gray";
                     size = {
                         width: 30,
                         height: 30,
+                    };
+                    break;
+                case 4: // explosion
+                    color = "pink";
+                    size = {
+                        width: 20,
+                        height: 20,
                     };
                     break;
                 default:

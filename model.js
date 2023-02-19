@@ -5,6 +5,21 @@ class Element {
     }
 }
 
+class Player extends Element {
+    constructor({pos}) {
+        super({pos, id: 1});
+        this.bombCapacity = 1;
+    }
+}
+
+class Bomb extends Element {
+    constructor({pos, time, boom}) {
+        super({pos, id: 2});
+        this.time = time;
+        setTimeout(boom.call(this), time);
+    }
+}
+
 class Grid {
     constructor() {
         // const values
@@ -34,40 +49,125 @@ class Game {
     constructor() {
         this.grid = new Grid();
 
-        this.player = new Element({
+        this.player = new Player({
             pos: {
                 x: 1,
                 y: 1,
-            },
-            id: 1
+            }
         });
         this.dropLocked = false;
 
+        this.bombs = [];
+
         this.grid.add(this.player);
+
+        let timeout;
     }
 
     movePlayer(direction) {
+        // выход за границы
         if (this.player.pos.x + direction.x >= this.grid.size.width ||
             this.player.pos.x + direction.x < 0 ||
             this.player.pos.y + direction.y >= this.grid.size.height ||
             this.player.pos.y + direction.y < 0) {
                 return
-            }
+        }
+        // колизия со стенами
         if (this.grid.values[this.player.pos.x + direction.x][this.player.pos.y + direction.y] === 0) {
             if (this.dropLocked) {
                 this.dropLocked = false;
                 this.grid.values[this.player.pos.x][this.player.pos.y] = 2;
             } else {
-                this.grid.values[this.player.pos.x][this.player.pos.y] = 0;
+                this.grid.clear(this.player);
             }
             this.player.pos.x += direction.x;
             this.player.pos.y += direction.y;
-            this.grid.values[this.player.pos.x][this.player.pos.y] = 1;
+            this.grid.add(this.player);
         }
     }
 
     dropBomb() {
         this.dropLocked = true;
+        const buf = {...this.player.pos};
+        this.timeout = setTimeout(() => {this.triggerExplosion(buf)}, 2000);
+    }
+
+    triggerExplosion(pos) {
+        console.log(`boom`);
+        this.grid.add({
+            pos: {
+                x: pos.x,
+                y: pos.y
+            },
+            id: 4 
+        });
+        this.grid.add({
+            pos: {
+                x: pos.x + 1,
+                y: pos.y
+            },
+            id: 4 
+        });
+        this.grid.add({
+            pos: {
+                x: pos.x - 1,
+                y: pos.y
+            },
+            id: 4 
+        });
+        this.grid.add({
+            pos: {
+                x: pos.x,
+                y: pos.y + 1
+            },
+            id: 4 
+        });
+        this.grid.add({
+            pos: {
+                x: pos.x,
+                y: pos.y - 1
+            },
+            id: 4 
+        });
+        setTimeout(() => {this.clearExplosion(pos)}, 1000);
+    }
+
+    clearExplosion(pos) {
+        this.grid.clear({
+            pos: {
+                x: pos.x,
+                y: pos.y
+            },
+            id: 4 
+        });
+        this.grid.clear({
+            pos: {
+                x: pos.x + 1,
+                y: pos.y
+            },
+            id: 4 
+        });
+        this.grid.clear({
+            pos: {
+                x: pos.x - 1,
+                y: pos.y
+            },
+            id: 4 
+        });
+        this.grid.clear({
+            pos: {
+                x: pos.x,
+                y: pos.y + 1
+            },
+            id: 4 
+        });
+        this.grid.clear({
+            pos: {
+                x: pos.x,
+                y: pos.y - 1
+            },
+            id: 4 
+        });
     }
 
 
