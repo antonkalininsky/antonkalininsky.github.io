@@ -12,7 +12,7 @@ class Grid {
             x: 0,
             y: 3
         }
-
+        this.dropLocked = false;
 
         // field initization
         this.values = [];
@@ -30,11 +30,20 @@ class Grid {
                 return
             }
         if (this.values[this.playerPosition.x + direction.x][this.playerPosition.y + direction.y] === 0) {
-            this.values[this.playerPosition.x][this.playerPosition.y] = 0;
+            if (this.dropLocked) {
+                this.dropLocked = false;
+                this.values[this.playerPosition.x][this.playerPosition.y] = 2;
+            } else {
+                this.values[this.playerPosition.x][this.playerPosition.y] = 0;
+            }
             this.playerPosition.x += direction.x;
             this.playerPosition.y += direction.y;
             this.values[this.playerPosition.x][this.playerPosition.y] = 1;
         }
+    }
+
+    dropBomb() {
+        this.dropLocked = true;
     }
 }
 

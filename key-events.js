@@ -25,6 +25,7 @@ window.addEventListener("keydown", (event) => {
             });
             break;
         case " ":
+            grid.dropBomb();
             break;
     }
 });

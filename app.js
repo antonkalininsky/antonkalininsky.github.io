@@ -39,7 +39,6 @@ class Sprite {
 
 const gridShow = [];
 
-
 // animation loop
 function animate() {
     // зацикливание функции анимации
@@ -49,33 +48,40 @@ function animate() {
     gridShow.length = 0;
     for (let y = 0; y < grid.size.height; y++) {
         for (let x = 0; x < grid.size.width; x++) {
-    
-            let color = 'black';
+            let color = "black";
             let size = {
                 width: 5,
-                height: 5
-            }
+                height: 5,
+            };
             switch (grid.values[x][y]) {
                 case 0:
-                    color = 'grey';
+                    color = "grey";
                     break;
                 case 1:
-                    color = 'red';
+                    color = "red";
                     size = {
                         width: 30,
-                        height: 30
-                    }
+                        height: 30,
+                    };
                     break;
                 case 2:
-                    color = 'green';
+                    color = "green";
+                    size = {
+                        width: 20,
+                        height: 20,
+                    };
                     break;
                 case 3:
-                    color = 'blue';
+                    color = "gray";
+                    size = {
+                        width: 30,
+                        height: 30,
+                    };
                     break;
                 default:
                     break;
             }
-    
+
             gridShow.push(
                 new Sprite({
                     position: {
@@ -97,6 +103,6 @@ function animate() {
     // сетка
     gridShow.forEach((x) => {
         x.update();
-    })
+    });
 }
 animate();
