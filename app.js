@@ -38,50 +38,56 @@ class Sprite {
 }
 
 const gridShow = [];
-for (let y = 0; y < GRID_PROP.size.height; y++) {
-    for (let x = 0; x < GRID_PROP.size.width; x++) {
 
-        let color = 'black';
-        switch (grid[x][y]) {
-            case 0:
-                color = 'grey';
-                break;
-            case 1:
-                color = 'red';
-                break;
-            case 2:
-                color = 'green';
-                break;
-            case 3:
-                color = 'blue';
-                break;
-            default:
-                break;
-        }
-
-        gridShow.push(
-            new Sprite({
-                position: {
-                    x: x * GRID_PROP.unit + GRID_PROP.unit / 3,
-                    y: y * GRID_PROP.unit + GRID_PROP.unit / 3,
-                },
-                size: {
-                    width: 10,
-                    height: 10,
-                },
-                color,
-            })
-        );
-    }
-}
-
-
-console.log(gridShow);
 
 // animation loop
 function animate() {
     // зацикливание функции анимации
     window.requestAnimationFrame(animate);
+
+    // пересобираем данные из модели
+    gridShow.length = 0;
+    for (let y = 0; y < grid.size.height; y++) {
+        for (let x = 0; x < grid.size.width; x++) {
+    
+            let color = 'black';
+            let size = {
+                width: 5,
+                height: 5
+            }
+            switch (grid.values[x][y]) {
+                case 0:
+                    color = 'grey';
+                    break;
+                case 1:
+                    color = 'red';
+                    size = {
+                        width: 30,
+                        height: 30
+                    }
+                    break;
+                case 2:
+                    color = 'green';
+                    break;
+                case 3:
+                    color = 'blue';
+                    break;
+                default:
+                    break;
+            }
+    
+            gridShow.push(
+                new Sprite({
+                    position: {
+                        x: x * grid.unit,
+                        y: y * grid.unit,
+                    },
+                    size,
+                    color,
+                })
+            );
+        }
+    }
 
     // очистка канваса
     c.fillStyle = "black";

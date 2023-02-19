@@ -1,16 +1,50 @@
-const GRID_PROP = {
-    size: {
-        width: 20,
-        height: 20
-    },
-    unit: 30
+class Grid {
+    constructor() {
+        // const values
+        this.size = {
+            width: 20,
+            height: 20,
+        };
+        this.unit = 30;
+
+        // player
+        this.playerPosition = {
+            x: 0,
+            y: 3
+        }
+
+
+        // field initization
+        this.values = [];
+        for (let i = 0; i < this.size.height; i++) {
+            this.values.push(new Array(this.size.width).fill(0));
+        }
+        this.values[this.playerPosition.x][this.playerPosition.y] = 1;
+    }
+
+    movePlayer(direction) {
+        if (this.playerPosition.x + direction.x >= this.size.width ||
+            this.playerPosition.x + direction.x < 0 ||
+            this.playerPosition.y + direction.y >= this.size.height ||
+            this.playerPosition.y + direction.y < 0) {
+                return
+            }
+        if (this.values[this.playerPosition.x + direction.x][this.playerPosition.y + direction.y] === 0) {
+            this.values[this.playerPosition.x][this.playerPosition.y] = 0;
+            this.playerPosition.x += direction.x;
+            this.playerPosition.y += direction.y;
+            this.values[this.playerPosition.x][this.playerPosition.y] = 1;
+        }
+    }
 }
 
-// создаю сетку
-const grid = [];
+const grid = new Grid();
 
-for (let i = 0; i < GRID_PROP.size.height; i++) {
-    grid.push(new Array(GRID_PROP.size.width).fill(0));
-}
+// class Player {
+//     constructor({ position, grid }) {
+//         this.position = position;
+//     }
 
-grid[0][3] = 1;
+//     // move(direction) {
+//     // }
+// }
