@@ -46,14 +46,14 @@ function animate() {
 
     // пересобираем данные из модели
     gridShow.length = 0;
-    for (let y = 0; y < grid.size.height; y++) {
-        for (let x = 0; x < grid.size.width; x++) {
+    for (let y = 0; y < game.grid.size.height; y++) {
+        for (let x = 0; x < game.grid.size.width; x++) {
             let color = "black";
             let size = {
                 width: 5,
                 height: 5,
             };
-            switch (grid.values[x][y]) {
+            switch (game.grid.values[x][y]) {
                 case 0:
                     color = "grey";
                     break;
@@ -85,8 +85,8 @@ function animate() {
             gridShow.push(
                 new Sprite({
                     position: {
-                        x: x * grid.unit,
-                        y: y * grid.unit,
+                        x: x * game.grid.unit,
+                        y: y * game.grid.unit,
                     },
                     size,
                     color,
