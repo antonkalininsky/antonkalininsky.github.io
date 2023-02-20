@@ -2,8 +2,8 @@
 const canvas = document.querySelector("canvas");
 const c = canvas.getContext("2d");
 
-canvas.width = 600;
-canvas.height = 600;
+canvas.width = game.grid.size.width * game.grid.unit;
+canvas.height = game.grid.size.height * game.grid.unit;
 
 c.fillStyle = "black";
 c.fillRect(0, 0, canvas.width, canvas.height);
@@ -83,6 +83,27 @@ function animate() {
                     size = {
                         width: 20,
                         height: 20,
+                    };
+                    break;
+                case 5: // wall
+                    color = "gray";
+                    size = {
+                        width: 30,
+                        height: 30,
+                    };
+                    break;
+                case 6: // easy wall
+                    color = "yellow";
+                    size = {
+                        width: 30,
+                        height: 30,
+                    };
+                    break;
+                case 7: // enemy
+                    color = "white";
+                    size = {
+                        width: 10,
+                        height: 30,
                     };
                     break;
                 default:
