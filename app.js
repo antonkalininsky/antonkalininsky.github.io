@@ -71,13 +71,6 @@ function animate() {
                         height: 20,
                     };
                     break;
-                case 3: // wall
-                    color = "gray";
-                    size = {
-                        width: 30,
-                        height: 30,
-                    };
-                    break;
                 case 4: // explosion
                     color = "pink";
                     size = {

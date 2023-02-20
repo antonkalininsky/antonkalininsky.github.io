@@ -1,25 +1,21 @@
-class Element {
-    constructor({ pos, id }) {
-        this.pos = pos;
-        this.id = id;
-    }
-}
-
-class Player extends Element {
-    constructor({ pos }) {
-        super({ pos, id: 1 });
-        this.bombCapacity = 1;
-        this.bombSize = 3;
-    }
-}
-
-class Bomb extends Element {
-    constructor({ pos, time, boom }) {
-        super({ pos, id: 2 });
-        this.time = time;
-        setTimeout(boom.call(this), time);
-    }
-}
+const dirs = [
+    {
+        x: 1,
+        y: 0,
+    },
+    {
+        x: 0,
+        y: 1,
+    },
+    {
+        x: -1,
+        y: 0,
+    },
+    {
+        x: 0,
+        y: -1,
+    },
+];
 
 class Grid {
     constructor() {
@@ -71,6 +67,99 @@ class Grid {
     }
 }
 
+class Element {
+    constructor({ pos, id }) {
+        this.pos = pos;
+        this.id = id;
+    }
+}
+
+class Npc extends Element {
+    constructor({ pos, id }) {
+        super({ pos, id });
+        this.isAlive = true;
+        this.isKiller = false;
+        this.deathList = [];
+        this.killList = [];
+    }
+
+    move(dir, grid) {
+        const newPos = {
+            x: this.pos.x + dir.x,
+            y: this.pos.y + dir.y,
+        };
+
+        // смертельные колизии
+        for (let deathSource of this.deathList) {
+            if (grid.get(newPos) === deathSource) {
+                this.isAlive = false;
+                return;
+            }
+        }
+
+        // убийственные колизии
+        for (let killSource of this.deathList) {
+            if (grid.get(newPos) === killSource) {
+                this.isKiller = true;
+                return;
+            }
+        }
+
+        // просто ходим
+        if (grid.get(newPos) === 0) {
+            grid.clear(this);
+            this.pos.x += dir.x;
+            this.pos.y += dir.y;
+            grid.add(this);
+            return true;
+        }
+        return false;
+    }
+}
+
+class Player extends Npc {
+    constructor({ pos }) {
+        super({ pos, id: 1 });
+        this.deathList = [4, 7];
+        this.bombLocked = false;
+        this.bombSize = 2;
+        this.bombLimit = 1;
+        this.heart;
+    }
+}
+
+class Enemy extends Npc {
+    constructor({ pos }) {
+        super({ pos, id: 7 });
+        this.curDir = 0;
+    }
+
+    move(grid) {
+        if (!super.move(dirs[this.curDir], grid)) {
+            this.curDir++;
+            if (this.curDir > 3) {
+                this.curDir = 0;
+            }
+            this.move(grid);
+        }
+        if (Math.random() > 0.99) {
+            this.curDir++;
+        }
+    }
+
+    start(grid) {
+        grid.add(this);
+        this.curDir = Math.trunc((Math.random() * 10) % 4);
+        this.heart = setInterval(() => {
+            this.move(grid);
+        }, 1000);
+    }
+
+    die() {
+        clearInterval(this.heart);
+    }
+}
+
 class Game {
     constructor() {
         this.grid = new Grid();
@@ -81,7 +170,6 @@ class Game {
                 y: 1,
             },
         });
-        this.dropLocked = false;
 
         this.generateWalls();
         this.grid.add(this.player);
@@ -93,85 +181,23 @@ class Game {
             id: 6,
         });
 
-        this.curDir = 0;
-        this.enemy = new Element({
+        this.enemy = new Enemy({
             pos: {
                 x: 9,
                 y: 9,
             },
-            id: 7,
         });
-        this.createEnemy();
+        this.enemy.start(this.grid);
+
+        this.bombCount = 0;
     }
 
-    createEnemy() {
-        this.grid.add(this.enemy);
-
-        setInterval(() => {
-            this.moveEnemy();
-        }, 1000);
-    }
-
-    moveEnemy() {
-        if(Math.random() > 0.9) {
-            this.curDir++;   
-        }
-        // if(Math.random() < 0.1) {
-        //     this.curDir--;   
-        // }
-        if (this.curDir >= 4) {
-            this.curDir = 0;
-        }
-        if (this.curDir < 0) {
-            this.curDir = 3;
-        }
-
-        const dirs = [
-            {
-                x: 1,
-                y: 0,
-            },
-            {
-                x: 0,
-                y: 1,
-            },
-            {
-                x: -1,
-                y: 0,
-            },
-            {
-                x: 0,
-                y: -1,
-            },
-        ];
-        // выход за границы
-        if (
-            this.enemy.pos.x + dirs[this.curDir].x >= this.grid.size.width ||
-            this.enemy.pos.x + dirs[this.curDir].x < 0 ||
-            this.enemy.pos.y + dirs[this.curDir].y >= this.grid.size.height ||
-            this.enemy.pos.y + dirs[this.curDir].y < 0
-        ) {
-            return;
-        }
-        // колизия со стенами
-        if (
-            this.grid.values[this.enemy.pos.x + dirs[this.curDir].x][
-                this.enemy.pos.y + dirs[this.curDir].y
-            ] === 0
-        ) {
-            this.grid.clear(this.enemy);
-            this.enemy.pos.x += dirs[this.curDir].x;
-            this.enemy.pos.y += dirs[this.curDir].y;
-            this.grid.add(this.enemy);
+    gameOver(isWin) {
+        console.log(`Game Over!`);
+        if (isWin) {
+            console.log(`You Won!`);
         } else {
-            this.curDir++;
-            if (this.curDir >= 4) {
-                this.curDir = 0;
-            }
-            if (this.curDir < 0) {
-                this.curDir = 3;
-            }
-            this.moveEnemy();
+            console.log(`You Lose!`);
         }
     }
 
@@ -192,35 +218,21 @@ class Game {
     }
 
     movePlayer(direction) {
-        // выход за границы
-        if (
-            this.player.pos.x + direction.x >= this.grid.size.width ||
-            this.player.pos.x + direction.x < 0 ||
-            this.player.pos.y + direction.y >= this.grid.size.height ||
-            this.player.pos.y + direction.y < 0
-        ) {
-            return;
+        const newPos = { ...this.player.pos };
+        this.player.move(direction, this.grid);
+        if (!this.player.isAlive) {
+            this.gameOver(false);
         }
-        // колизия со стенами
-        if (
-            this.grid.values[this.player.pos.x + direction.x][
-                this.player.pos.y + direction.y
-            ] === 0
-        ) {
-            if (this.dropLocked) {
-                this.dropLocked = false;
-                this.grid.values[this.player.pos.x][this.player.pos.y] = 2;
-            } else {
-                this.grid.clear(this.player);
-            }
-            this.player.pos.x += direction.x;
-            this.player.pos.y += direction.y;
-            this.grid.add(this.player);
+        if (this.player.bombLocked) {
+            this.player.bombLocked = false;
+            this.grid.set(newPos, 2);
         }
     }
 
     dropBomb() {
-        this.dropLocked = true;
+        if (this.bombCount >= this.player.bombLimit) return;
+        this.bombCount++;
+        this.player.bombLocked = true;
         const buf = { ...this.player.pos };
         this.timeout = setTimeout(() => {
             this.triggerExplosion(buf);
@@ -228,24 +240,7 @@ class Game {
     }
 
     triggerExplosion(pos) {
-        const dirs = [
-            {
-                x: 1,
-                y: 0,
-            },
-            {
-                x: -1,
-                y: 0,
-            },
-            {
-                x: 0,
-                y: 1,
-            },
-            {
-                x: 0,
-                y: -1,
-            },
-        ];
+        this.bombCount--;
         // центр
         this.grid.tryExplode(pos);
         this.hitScan(this.grid.get(pos), pos);
@@ -268,9 +263,9 @@ class Game {
     }
 
     hitScan(val, pos) {
-        // console.log(pos);
         switch (val) {
             case 1:
+                this.gameOver(false);
                 return "player killed!";
             case 2:
                 this.grid.set(pos, 0);
@@ -282,6 +277,10 @@ class Game {
                 this.grid.set(pos, 0);
                 this.grid.tryExplode(pos);
                 return "wall destroyed!";
+            case 7:
+                this.enemy.die();
+                this.grid.set(pos, 0);
+                return "enemy hit!";
             default:
                 return "";
         }
