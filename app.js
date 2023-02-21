@@ -1,3 +1,10 @@
+// canvas focus
+window.onload = function () {
+    var canvasElm = document.getElementById("canvas");
+    canvasElm.setAttribute("tabindex", "0");
+    canvasElm.focus();
+};
+
 // canvas setup
 const canvas = document.querySelector("canvas");
 const c = canvas.getContext("2d");
@@ -96,6 +103,27 @@ function animate() {
                     color = "white";
                     size = {
                         width: 10,
+                        height: 30,
+                    };
+                    break;
+                case 80: // loot bombs
+                    color = "yellow";
+                    size = {
+                        width: 15,
+                        height: 15,
+                    };
+                    break;
+                case 81: // loot range
+                    color = "blue";
+                    size = {
+                        width: 15,
+                        height: 15,
+                    };
+                    break;
+                case 90: // exit
+                    color = "white";
+                    size = {
+                        width: 30,
                         height: 30,
                     };
                     break;

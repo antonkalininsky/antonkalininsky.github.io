@@ -122,7 +122,7 @@ class Player extends Npc {
         super({ pos, id: 1 });
         this.deathList = [4, 7];
         this.bombLocked = false;
-        this.bombSize = 2;
+        this.bombRange = 2;
         this.bombLimit = 1;
         this.heart;
     }
@@ -142,8 +142,9 @@ class Enemy extends Npc {
             }
             this.move(grid);
         }
-        if (Math.random() > 0.99) {
-            this.curDir++;
+        if (Math.random() > 0.95) {
+            console.log(`wow`);
+            this.curDir = Math.trunc((Math.random() * 10) % 4);
         }
     }
 
@@ -152,7 +153,7 @@ class Enemy extends Npc {
         this.curDir = Math.trunc((Math.random() * 10) % 4);
         this.heart = setInterval(() => {
             this.move(grid);
-        }, 1000);
+        }, 100);
     }
 
     die() {
@@ -162,25 +163,16 @@ class Enemy extends Npc {
 
 class Game {
     constructor() {
+        // grid
         this.grid = new Grid();
 
-        this.player = new Player({
-            pos: {
-                x: 1,
-                y: 1,
-            },
-        });
-
+        // terrain
         this.generateWalls();
-        this.grid.add(this.player);
-        this.grid.add({
-            pos: {
-                x: 3,
-                y: 3,
-            },
-            id: 6,
-        });
+        this.boxCount = 0;
+        this.boxNumber = 0;
+        this.generateBoxes();
 
+        // enemies
         this.enemy = new Enemy({
             pos: {
                 x: 9,
@@ -189,7 +181,18 @@ class Game {
         });
         this.enemy.start(this.grid);
 
+        // player
+        this.player = new Player({
+            pos: {
+                x: 1,
+                y: 1,
+            },
+        });
+        this.grid.add(this.player);
         this.bombCount = 0;
+
+        // endgame
+        this.isExitFound = false;
     }
 
     gameOver(isWin) {
@@ -217,20 +220,80 @@ class Game {
         }
     }
 
-    movePlayer(direction) {
-        const newPos = { ...this.player.pos };
-        this.player.move(direction, this.grid);
-        if (!this.player.isAlive) {
-            this.gameOver(false);
+    generateBoxes() {
+        for (let y = 1; y < this.grid.size.height - 1; y++) {
+            for (let x = 1; x < this.grid.size.width - 1; x++) {
+                if ((y > 2 || x > 2) && this.grid.get({ x, y }) === 0) {
+                    if (Math.random() > 0.5) {
+                        this.boxNumber++;
+                        this.grid.add({
+                            pos: {
+                                x,
+                                y,
+                            },
+                            id: 6,
+                        });
+                    }
+                }
+            }
         }
+    }
+
+    rollBoxLoot(pos) {
+        console.log(this.boxCount);
+        console.log(this.boxNumber);
+        const seed = Math.random();
+        if (seed >= 0 && seed < 0.08) {
+            this.grid.set(pos, 80);
+        } else if (seed >= 0.1 && seed < 0.18) {
+            this.grid.set(pos, 81);
+        }
+        if (
+            ((seed >= 0.2 && seed < (0.2 + 0.05*this.boxCount/this.boxNumber)) || this.boxCount === this.boxNumber) &&
+            !this.isExitFound
+        ) {
+            this.isExitFound = true;
+            this.grid.set(pos, 90);
+        }
+    }
+
+    movePlayer(direction) {
+        const oldPos = { ...this.player.pos };
+        const newPos = { ...this.player.pos };
+        newPos.x += direction.x;
+        newPos.y += direction.y;
+        switch (this.grid.get(newPos)) {
+            case 7:
+                console.log(`enemy stepped on`);
+                break;
+            case 80:
+                this.player.bombLimit++;
+                this.grid.set(newPos, 0);
+                console.log(`bomb loot`);
+                break;
+            case 81:
+                this.player.bombRange++;
+                this.grid.set(newPos, 0);
+                console.log(`range loot`);
+                break;
+            case 90:
+                // this.grid.set(newPos, 0);
+                console.log(`exit reached!`);
+                break;
+            default:
+                break;
+        }
+        this.player.move(direction, this.grid);
         if (this.player.bombLocked) {
             this.player.bombLocked = false;
-            this.grid.set(newPos, 2);
+            this.grid.set(oldPos, 2);
         }
     }
 
     dropBomb() {
-        if (this.bombCount >= this.player.bombLimit) return;
+        if (this.bombCount >= this.player.bombLimit) {
+            return;
+        }
         this.bombCount++;
         this.player.bombLocked = true;
         const buf = { ...this.player.pos };
@@ -247,15 +310,13 @@ class Game {
         // 4 направления
         for (let dir of dirs) {
             // одно направление
-            for (let i = 1; i < this.player.bombSize; i++) {
+            for (let i = 1; i < this.player.bombRange; i++) {
                 const buf = {
                     x: pos.x + dir.x * i,
                     y: pos.y + dir.y * i,
                 };
                 this.grid.tryExplode(buf);
-                let msg = this.hitScan(this.grid.get(buf), buf);
-                if (msg !== "") {
-                    console.log(msg);
+                if (this.hitScan(this.grid.get(buf), buf)) {
                     break;
                 }
             }
@@ -266,23 +327,27 @@ class Game {
         switch (val) {
             case 1:
                 this.gameOver(false);
-                return "player killed!";
+                return true;
             case 2:
                 this.grid.set(pos, 0);
                 this.grid.tryExplode(pos);
-                return "bomb touches itself!";
+                return true;
             case 5:
-                return "wall hit!";
+                return true;
             case 6:
                 this.grid.set(pos, 0);
                 this.grid.tryExplode(pos);
-                return "wall destroyed!";
+                this.boxCount++;
+                setTimeout(() => {
+                    this.rollBoxLoot(pos);
+                }, 1100);
+                return true;
             case 7:
                 this.enemy.die();
                 this.grid.set(pos, 0);
-                return "enemy hit!";
+                return true;
             default:
-                return "";
+                return false;
         }
     }
 }
