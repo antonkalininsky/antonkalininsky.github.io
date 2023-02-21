@@ -1,4 +1,7 @@
 window.addEventListener("keydown", (event) => {
+    if (game.disableControl) {
+        return
+    }
     switch (event.key) {
         case "ArrowUp":
             game.movePlayer({

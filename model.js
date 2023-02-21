@@ -77,9 +77,7 @@ class Element {
 class Npc extends Element {
     constructor({ pos, id }) {
         super({ pos, id });
-        this.isAlive = true;
         this.isKiller = false;
-        this.deathList = [];
         this.killList = [];
     }
 
@@ -89,19 +87,10 @@ class Npc extends Element {
             y: this.pos.y + dir.y,
         };
 
-        // смертельные колизии
-        for (let deathSource of this.deathList) {
-            if (grid.get(newPos) === deathSource) {
-                this.isAlive = false;
-                return;
-            }
-        }
-
         // убийственные колизии
-        for (let killSource of this.deathList) {
-            if (grid.get(newPos) === killSource) {
+        for (let target of this.killList) {
+            if (grid.get(newPos) === target) {
                 this.isKiller = true;
-                return;
             }
         }
 
@@ -132,9 +121,26 @@ class Enemy extends Npc {
     constructor({ pos }) {
         super({ pos, id: 7 });
         this.curDir = 0;
+        this.killList = [1];
     }
 
     move(grid) {
+        // есть куда ходить?
+        let flag = true;
+        for (let dir of dirs) {
+            const testDir = { ...this.pos };
+            testDir.x += dir.x;
+            testDir.y += dir.y;
+            if (grid.get(testDir) === 0) {
+                flag = false;
+                break;
+            }
+        }
+        if (flag) {
+            return;
+        }
+
+        // ходим
         if (!super.move(dirs[this.curDir], grid)) {
             this.curDir++;
             if (this.curDir > 3) {
@@ -142,8 +148,7 @@ class Enemy extends Npc {
             }
             this.move(grid);
         }
-        if (Math.random() > 0.95) {
-            console.log(`wow`);
+        if (Math.random() > 0.97) {
             this.curDir = Math.trunc((Math.random() * 10) % 4);
         }
     }
@@ -153,7 +158,7 @@ class Enemy extends Npc {
         this.curDir = Math.trunc((Math.random() * 10) % 4);
         this.heart = setInterval(() => {
             this.move(grid);
-        }, 100);
+        }, 1000);
     }
 
     die() {
@@ -171,15 +176,8 @@ class Game {
         this.boxCount = 0;
         this.boxNumber = 0;
         this.generateBoxes();
-
-        // enemies
-        this.enemy = new Enemy({
-            pos: {
-                x: 9,
-                y: 9,
-            },
-        });
-        this.enemy.start(this.grid);
+        this.enemies = [];
+        this.generateEnemies();
 
         // player
         this.player = new Player({
@@ -193,9 +191,25 @@ class Game {
 
         // endgame
         this.isExitFound = false;
+        this.disableControl = false;
+        this.killerCheck = setInterval(() => {
+            this.checkKillers();
+        }, 1000);
+    }
+
+    checkKillers() {
+        for (let enemy of this.enemies) {
+            if (enemy.isKiller) {
+                clearInterval(this.killerCheck);
+                this.gameOver(false);
+                break;
+            }
+        }
     }
 
     gameOver(isWin) {
+        this.enemies.forEach((x) => x.die());
+        this.disableControl = true;
         console.log(`Game Over!`);
         if (isWin) {
             console.log(`You Won!`);
@@ -239,9 +253,24 @@ class Game {
         }
     }
 
+    generateEnemies() {
+        for (let y = 1; y < this.grid.size.height - 1; y++) {
+            for (let x = 1; x < this.grid.size.width - 1; x++) {
+                if ((y > 5 || x > 5) && this.grid.get({ x, y }) === 0) {
+                    if (Math.random() > 0.9) {
+                        this.enemies.push(
+                            new Enemy({
+                                pos: { x, y },
+                            })
+                        );
+                        this.enemies.at(-1).start(this.grid);
+                    }
+                }
+            }
+        }
+    }
+
     rollBoxLoot(pos) {
-        console.log(this.boxCount);
-        console.log(this.boxNumber);
         const seed = Math.random();
         if (seed >= 0 && seed < 0.08) {
             this.grid.set(pos, 80);
@@ -249,7 +278,9 @@ class Game {
             this.grid.set(pos, 81);
         }
         if (
-            ((seed >= 0.2 && seed < (0.2 + 0.05*this.boxCount/this.boxNumber)) || this.boxCount === this.boxNumber) &&
+            ((seed >= 0.2 &&
+                seed < 0.2 + (0.05 * this.boxCount) / this.boxNumber) ||
+                this.boxCount === this.boxNumber) &&
             !this.isExitFound
         ) {
             this.isExitFound = true;
@@ -263,7 +294,12 @@ class Game {
         newPos.x += direction.x;
         newPos.y += direction.y;
         switch (this.grid.get(newPos)) {
+            case 4:
+                this.gameOver(false);
+                console.log(`fire stepped on`);
+                break;
             case 7:
+                this.gameOver(false);
                 console.log(`enemy stepped on`);
                 break;
             case 80:
@@ -277,7 +313,7 @@ class Game {
                 console.log(`range loot`);
                 break;
             case 90:
-                // this.grid.set(newPos, 0);
+                this.gameOver(true);
                 console.log(`exit reached!`);
                 break;
             default:
@@ -343,8 +379,13 @@ class Game {
                 }, 1100);
                 return true;
             case 7:
-                this.enemy.die();
+                this.enemies
+                    .find((z) => {
+                        return z.pos.x === pos.x && z.pos.y === pos.y;
+                    })
+                    .die();
                 this.grid.set(pos, 0);
+                this.grid.tryExplode(pos);
                 return true;
             default:
                 return false;
