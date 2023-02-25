@@ -210,12 +210,12 @@ class Game {
     gameOver(isWin) {
         this.enemies.forEach((x) => x.die());
         this.disableControl = true;
-        console.log(`Game Over!`);
         if (isWin) {
-            console.log(`You Won!`);
+            document.querySelector('.game-state').innerHTML = 'YOU WON';
         } else {
-            console.log(`You Lose!`);
+            document.querySelector('.game-state').innerHTML = 'YOU LOSE';
         }
+        document.querySelector('.game-over').style.display = 'block';
     }
 
     generateWalls() {
@@ -387,6 +387,14 @@ class Game {
                 this.grid.set(pos, 0);
                 this.grid.tryExplode(pos);
                 return true;
+            case 80:
+                this.grid.set(pos, 0);
+                this.grid.tryExplode(pos);
+                return false;
+            case 81:
+                this.grid.set(pos, 0);
+                this.grid.tryExplode(pos);
+                return false;
             default:
                 return false;
         }

@@ -2,4 +2,34 @@
     display: flex;
     justify-content: center;
     align-items: center;
+
+    position: relative;
+}
+
+.game-over {
+    display: none;
+
+    position: absolute;
+    background-color: white;
+    width: 250px;
+    text-align: center;
+
+    font-family: 'VT323';
+}
+
+.game-over * {
+    margin: 0;
+    padding: 0;
+}
+
+.game-header {
+    font-size: 50px;
+    
+}
+.game-state {
+    font-size: 40px;
+}
+
+.restart-info {
+    font-size: 25px;
 }
